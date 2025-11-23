@@ -1,6 +1,6 @@
 # Copro SaaS
 
-SaaS Next.js complet pour syndics bénévoles : onboarding payant via PayPal, gestion de copropriété, invitations copropriétaires, AG, comptabilité, documents et rappels.
+SaaS Next.js complet pour syndics bénévoles et déclinaisons SCI familiales / colocation : onboarding payant via PayPal, gestion de copropriété, SCI et colocation, invitations, AG, comptabilité, documents et rappels.
 
 ## Prérequis
 - Node.js 18+
@@ -25,6 +25,7 @@ Copiez `.env.example` en `.env` et renseignez vos valeurs :
 - `AUTH_SECRET`
 - `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`
 - `NEXT_PUBLIC_PAYPAL_CLIENT_ID`
+- `PRODUCT_PLAN` (SMALL_COPRO, MEDIUM_COPRO, SCI_FAMILIALE ou COLOCATION)
 
 ## Base de données
 ```bash
@@ -37,7 +38,7 @@ En conteneur : `docker compose run --rm web npx prisma migrate deploy`
 ```bash
 npm run dev
 ```
-Application disponible sur http://localhost:3000
+Application disponible sur http://localhost:3000 (navigation SCI via `/app/sci`, colocation via `/app/colocations`).
 
 Avec Docker : `docker compose up web` expose le frontend sur le port 3000 et Postgres sur 5432.
 
@@ -64,6 +65,8 @@ Avec Docker : `docker compose up web` expose le frontend sur le port 3000 et Pos
 14. Rappels `/app/rappels` : créer un rappel, vérifier la liste.
 15. Import bancaire `/app/operations` : charger un CSV `date;libellé;montant`, prévisualiser puis créer les opérations.
 16. Consultation ponctuelle `/app/consultations` : saisir un sujet et un montant, générer l’ordre PayPal puis simuler la capture pour passer le ticket en payé.
+17. Module SCI `/app/sci` : remplir les informations de la SCI, vérifier la création et la répartition des flux.
+18. Module colocation `/app/colocations` : créer la colocation démo, vérifier répartition des charges et quittance affichée.
 
 ## Arborescence
 - `src/app` : pages (landing, démo, app connectée)

@@ -11,6 +11,8 @@ const navItems = [
   { href: '/app/documents', label: 'Documents' },
   { href: '/app/rappels', label: 'Rappels' },
   { href: '/app/consultations', label: 'Consultations' },
+  { href: '/app/sci', label: 'SCI familiales' },
+  { href: '/app/colocations', label: 'Colocations' },
   { href: '/app/settings/billing', label: 'Billing' }
 ];
 

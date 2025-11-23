@@ -16,6 +16,14 @@ enum Role {
 enum SubscriptionPlan {
   SMALL_COPRO
   MEDIUM_COPRO
+  SCI_FAMILIALE
+  COLOCATION
+}
+
+enum ProductType {
+  COPROPRIETE
+  SCI
+  COLOCATION
 }
 
 enum SubscriptionStatus {
@@ -140,6 +148,7 @@ model Subscription {
   id                   String   @id @default(uuid())
   userId               String
   plan                 SubscriptionPlan
+  product              ProductType @default(COPROPRIETE)
   status               SubscriptionStatus
   paypalSubscriptionId String?
   currentPeriodStart   DateTime?
@@ -147,6 +156,185 @@ model Subscription {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   user                 User     @relation(fields: [userId], references: [id])
+}
+
+enum SciFlowType {
+  LOYER
+  CHARGE
+  TRAVAUX
+  EMPRUNT_INTERET
+  EMPRUNT_CAPITAL
+}
+
+enum ColocChargeRuleType {
+  EGALITAIRE
+  PONDERATION_CHAMBRE
+}
+
+model Sci {
+  id          String   @id @default(uuid())
+  ownerUserId String
+  nom         String
+  forme       String
+  siege       String
+  siren       String?
+  frequenceAG String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  owner       User     @relation(fields: [ownerUserId], references: [id])
+  associates  SciAssociate[]
+  assets      SciAsset[]
+  flows       SciFlow[]
+  decisions   SciDecision[]
+  reports     SciAssociateReport[]
+}
+
+model SciAssociate {
+  id        String   @id @default(uuid())
+  sciId     String
+  name      String
+  email     String
+  parts     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sci       Sci      @relation(fields: [sciId], references: [id])
+  reports   SciAssociateReport[]
+}
+
+model SciAsset {
+  id        String   @id @default(uuid())
+  sciId     String
+  adresse   String
+  type      String
+  quotePart Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sci       Sci      @relation(fields: [sciId], references: [id])
+}
+
+model SciFlow {
+  id          String     @id @default(uuid())
+  sciId       String
+  type        SciFlowType
+  montant     Int
+  dateFlux    DateTime
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sci         Sci       @relation(fields: [sciId], references: [id])
+}
+
+model SciDecision {
+  id          String   @id @default(uuid())
+  sciId       String
+  titre       String
+  statut      String
+  texteVote   String
+  dateDecision DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sci         Sci      @relation(fields: [sciId], references: [id])
+}
+
+model SciAssociateReport {
+  id            String   @id @default(uuid())
+  sciId         String
+  associateId   String
+  annee         Int
+  quotePartLoyers  Int
+  quotePartCharges Int
+  variationCompte  Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sci           Sci      @relation(fields: [sciId], references: [id])
+  associate     SciAssociate @relation(fields: [associateId], references: [id])
+}
+
+model Colocation {
+  id          String   @id @default(uuid())
+  ownerUserId String
+  nom         String
+  structure   String
+  nbChambres  Int
+  loyerGlobal Int
+  chargesGlobales Int
+  repartition ColocChargeRuleType
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  owner       User     @relation(fields: [ownerUserId], references: [id])
+  chambres    Room[]
+  locataires  Tenant[]
+  encaissements RentPayment[]
+  incidents   Incident[]
+}
+
+model Room {
+  id           String   @id @default(uuid())
+  colocationId String
+  nom          String
+  loyerTheorique Int
+  statut       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  colocation   Colocation @relation(fields: [colocationId], references: [id])
+  occupancies  OccupancyPeriod[]
+}
+
+model Tenant {
+  id           String   @id @default(uuid())
+  colocationId String
+  name         String
+  email        String
+  chambreId    String?
+  dateEntree   DateTime
+  dateSortie   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  colocation   Colocation @relation(fields: [colocationId], references: [id])
+  chambre      Room? @relation(fields: [chambreId], references: [id])
+  occupancies  OccupancyPeriod[]
+  incidents    Incident[]
+}
+
+model OccupancyPeriod {
+  id        String   @id @default(uuid())
+  roomId    String
+  tenantId  String
+  startDate DateTime
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  room      Room   @relation(fields: [roomId], references: [id])
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model RentPayment {
+  id           String   @id @default(uuid())
+  colocationId String
+  tenantId     String
+  mois         Int
+  annee        Int
+  montantLoyer Int
+  montantCharges Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  colocation   Colocation @relation(fields: [colocationId], references: [id])
+  tenant       Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model Incident {
+  id           String   @id @default(uuid())
+  colocationId String
+  tenantId     String?
+  roomId       String?
+  type         String
+  description  String
+  statut       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  colocation   Colocation @relation(fields: [colocationId], references: [id])
+  tenant       Tenant? @relation(fields: [tenantId], references: [id])
+  room         Room? @relation(fields: [roomId], references: [id])
 }
 
 model Copropriete {

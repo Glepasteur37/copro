@@ -67,3 +67,51 @@ export const consultationCaptureSchema = z.object({
   ticketId: z.string().uuid(),
   orderId: z.string().min(3)
 });
+
+export const sciOnboardingSchema = z.object({
+  nom: z.string().min(1),
+  forme: z.string().min(1),
+  siege: z.string().min(1),
+  frequenceAG: z.string().min(1),
+  associes: z.array(
+    z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      parts: z.number().positive()
+    })
+  ),
+  biens: z.array(
+    z.object({
+      adresse: z.string().min(1),
+      type: z.string().min(1),
+      quotePart: z.number().positive()
+    })
+  ),
+  depart: z.object({
+    apports: z.number().nonnegative(),
+    compteCourant: z.number().nonnegative(),
+    soldeBanque: z.number().nonnegative()
+  })
+});
+
+export const colocOnboardingSchema = z.object({
+  nom: z.string().min(1),
+  structure: z.string().min(1),
+  nbChambres: z.number().int().min(1),
+  loyerGlobal: z.number().int().nonnegative(),
+  chargesGlobales: z.number().int().nonnegative(),
+  repartition: z.enum(['EGALITAIRE', 'PONDERATION_CHAMBRE']),
+  chambres: z.array(
+    z.object({
+      nom: z.string().min(1),
+      ponderation: z.number().positive()
+    })
+  ),
+  locataires: z.array(
+    z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      chambre: z.string().min(1)
+    })
+  )
+});
