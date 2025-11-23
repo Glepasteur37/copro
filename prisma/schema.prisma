@@ -1,0 +1,410 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SINDIC_ADMIN
+  COPROPRIETAIRE
+  EXPERT
+}
+
+enum SubscriptionPlan {
+  SMALL_COPRO
+  MEDIUM_COPRO
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  CANCELLED
+}
+
+enum OperationType {
+  APPEL_FONDS
+  REGLEMENT_COPRO
+  DEPENSE
+  AUTRE
+}
+
+enum LotType {
+  APPARTEMENT
+  PARKING
+  LOCAL
+}
+
+enum AppelStatut {
+  EMIS
+  PARTIELLEMENT_PAYE
+  PAYE
+  EN_RETARD
+}
+
+enum ImpayeStatut {
+  EN_RETARD
+  PLAN_ECHEANCE
+  CLOTURE
+}
+
+enum AGType {
+  ORDINAIRE
+  EXTRAORDINAIRE
+}
+
+enum AGStatut {
+  PLANIFIEE
+  TENUE
+  CLOTUREE
+}
+
+enum AGMajorite {
+  ART24
+  ART25
+  ART26
+}
+
+enum AGResultat {
+  EN_ATTENTE
+  ADOPTEE
+  REJETEE
+}
+
+enum ContratType {
+  ASCENSEUR
+  NETTOYAGE
+  CHAUDIERE
+  ASSURANCE
+  AUTRE
+}
+
+enum TravauxStatut {
+  A_ETUDIER
+  VOTE
+  EN_COURS
+  TERMINE
+}
+
+enum DocumentType {
+  AG_CONVOCATION
+  AG_PV
+  CONTRAT
+  TRAVAUX
+  COMPTES_ANNUELS
+  AUTRE
+}
+
+enum RappelType {
+  AG_ANNUELLE
+  CONTROLE_TECHNIQUE
+  ECHEANCE_CONTRAT
+  AUTRE
+}
+
+enum RappelStatut {
+  A_FAIRE
+  FAIT
+}
+
+enum InvitationStatus {
+  ENVOYEE
+  ACCEPTEE
+  EXPIREE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  subscriptions Subscription[]
+  coproprietes  Copropriete[] @relation("OwnerCopro")
+  coproprietaire Coproprietaire?
+}
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  userId               String
+  plan                 SubscriptionPlan
+  status               SubscriptionStatus
+  paypalSubscriptionId String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id])
+}
+
+model Copropriete {
+  id           String   @id @default(uuid())
+  ownerUserId  String
+  nom          String
+  adresse      String
+  nbLotsMax    Int
+  settings     Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  owner        User     @relation("OwnerCopro", fields: [ownerUserId], references: [id])
+  coproprietaires Coproprietaire[]
+  lots         Lot[]
+  comptes      CompteCoproprietaire[]
+  operations   OperationComptable[]
+  budgets      BudgetPrevisionnel[]
+  appels       AppelDeFonds[]
+  impayes      Impaye[]
+  assemblees   AssembleeGenerale[]
+  journal      JournalDecision[]
+  contrats     Contrat[]
+  travaux      Travaux[]
+  documents    Document[]
+  rappels      TacheRappel[]
+  invitations  InvitationCoproprietaire[]
+}
+
+model Coproprietaire {
+  id              String   @id @default(uuid())
+  coproprieteId   String
+  firstName       String
+  lastName        String
+  email           String
+  telephone       String
+  estOccupant     Boolean
+  rib             String?
+  userId          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  copropriete     Copropriete @relation(fields: [coproprieteId], references: [id])
+  lots            Lot[]
+  compte          CompteCoproprietaire?
+  user            User? @relation(fields: [userId], references: [id])
+  appels          AppelDeFondsLigne[]
+  impayes         Impaye[]
+}
+
+model Lot {
+  id             String   @id @default(uuid())
+  coproprieteId  String
+  label          String
+  tantiemes      Int
+  type           LotType
+  coproprietaireId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  copropriete    Copropriete @relation(fields: [coproprieteId], references: [id])
+  coproprietaire Coproprietaire? @relation(fields: [coproprietaireId], references: [id])
+}
+
+model CompteCoproprietaire {
+  id              String   @id @default(uuid())
+  coproprieteId   String
+  coproprietaireId String
+  solde           Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  copropriete     Copropriete @relation(fields: [coproprieteId], references: [id])
+  coproprietaire  Coproprietaire @relation(fields: [coproprietaireId], references: [id])
+}
+
+model OperationComptable {
+  id             String   @id @default(uuid())
+  coproprieteId  String
+  type           OperationType
+  montant        Int
+  dateOperation  DateTime
+  libelle        String
+  categorie      String
+  pieceJointeUrl String?
+  lotId          String?
+  coproprietaireId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  copropriete    Copropriete @relation(fields: [coproprieteId], references: [id])
+  lot            Lot? @relation(fields: [lotId], references: [id])
+  coproprietaire Coproprietaire? @relation(fields: [coproprietaireId], references: [id])
+}
+
+model BudgetPrevisionnel {
+  id                 String   @id @default(uuid())
+  coproprieteId      String
+  exerciceDebut      DateTime
+  exerciceFin        DateTime
+  totalBudget        Int
+  repartitionCategories Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  copropriete        Copropriete @relation(fields: [coproprieteId], references: [id])
+  appels             AppelDeFonds[]
+}
+
+model AppelDeFonds {
+  id                 String   @id @default(uuid())
+  coproprieteId      String
+  budgetPrevisionnelId String?
+  dateEmission       DateTime
+  dateEcheance       DateTime
+  montantTotal       Int
+  statut             AppelStatut
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  copropriete        Copropriete @relation(fields: [coproprieteId], references: [id])
+  budgetPrevisionnel BudgetPrevisionnel? @relation(fields: [budgetPrevisionnelId], references: [id])
+  lignes             AppelDeFondsLigne[]
+  impayes            Impaye[]
+}
+
+model AppelDeFondsLigne {
+  id               String   @id @default(uuid())
+  appelId          String
+  coproprietaireId String
+  montant          Int
+  statut           AppelStatut
+  dateDernierRappel DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  appel            AppelDeFonds @relation(fields: [appelId], references: [id])
+  coproprietaire   Coproprietaire @relation(fields: [coproprietaireId], references: [id])
+}
+
+model Impaye {
+  id                   String   @id @default(uuid())
+  coproprieteId        String
+  coproprietaireId     String
+  appelId              String
+  montantRestant       Int
+  datePremiereEcheance DateTime
+  statut               ImpayeStatut
+  nombreRelances       Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  copropriete          Copropriete @relation(fields: [coproprieteId], references: [id])
+  coproprietaire       Coproprietaire @relation(fields: [coproprietaireId], references: [id])
+  appel                AppelDeFonds @relation(fields: [appelId], references: [id])
+}
+
+model AssembleeGenerale {
+  id            String   @id @default(uuid())
+  coproprieteId String
+  date          DateTime
+  type          AGType
+  statut        AGStatut
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  copropriete   Copropriete @relation(fields: [coproprieteId], references: [id])
+  resolutions   ResolutionAG[]
+  pouvoirs      PouvoirAG[]
+}
+
+model ResolutionAG {
+  id             String   @id @default(uuid())
+  agId           String
+  titre          String
+  description    String
+  articleMajorite AGMajorite
+  resultat       AGResultat
+  pourTantiemes  Int
+  contreTantiemes Int
+  abstentionTantiemes Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ag             AssembleeGenerale @relation(fields: [agId], references: [id])
+  journalEntries JournalDecision[]
+}
+
+model PouvoirAG {
+  id        String   @id @default(uuid())
+  agId      String
+  donneurId String
+  receveurId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ag        AssembleeGenerale @relation(fields: [agId], references: [id])
+  donneur   Coproprietaire @relation("Donneur", fields: [donneurId], references: [id])
+  receveur  Coproprietaire @relation("Receveur", fields: [receveurId], references: [id])
+}
+
+model JournalDecision {
+  id            String   @id @default(uuid())
+  coproprieteId String
+  resolutionId  String?
+  titre         String
+  description   String
+  dateDecision  DateTime
+  statut        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  copropriete   Copropriete @relation(fields: [coproprieteId], references: [id])
+  resolution    ResolutionAG? @relation(fields: [resolutionId], references: [id])
+}
+
+model Contrat {
+  id                    String   @id @default(uuid())
+  coproprieteId         String
+  fournisseur           String
+  type                  ContratType
+  montantAnnuel         Int
+  dateDebut             DateTime
+  dateFin               DateTime
+  renouvellementAuto    Boolean
+  rappelAvantEcheanceJours Int
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  copropriete           Copropriete @relation(fields: [coproprieteId], references: [id])
+}
+
+model Travaux {
+  id             String   @id @default(uuid())
+  coproprieteId  String
+  nom            String
+  description    String
+  budgetEstime   Int
+  fournisseur    String
+  dateVoteAG     DateTime?
+  statut         TravauxStatut
+  pieceJointeUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  copropriete    Copropriete @relation(fields: [coproprieteId], references: [id])
+}
+
+model Document {
+  id            String   @id @default(uuid())
+  coproprieteId String
+  type          DocumentType
+  titre         String
+  url           String
+  dateUpload    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  copropriete   Copropriete @relation(fields: [coproprieteId], references: [id])
+}
+
+model TacheRappel {
+  id            String   @id @default(uuid())
+  coproprieteId String
+  type          RappelType
+  dateEcheance  DateTime
+  description   String
+  statut        RappelStatut
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  copropriete   Copropriete @relation(fields: [coproprieteId], references: [id])
+}
+
+model InvitationCoproprietaire {
+  id            String   @id @default(uuid())
+  coproprieteId String
+  email         String
+  token         String   @unique
+  expiresAt     DateTime
+  status        InvitationStatus
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  copropriete   Copropriete @relation(fields: [coproprieteId], references: [id])
+}
