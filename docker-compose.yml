@@ -1,0 +1,29 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: copro
+      POSTGRES_PASSWORD: copro
+      POSTGRES_DB: copro
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://copro:copro@db:5432/copro
+      AUTH_SECRET: change-me
+      PAYPAL_CLIENT_ID: your-paypal-client-id
+      PAYPAL_CLIENT_SECRET: your-paypal-client-secret
+      NEXT_PUBLIC_PAYPAL_CLIENT_ID: your-paypal-client-id
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    command: npm run start
+volumes:
+  pgdata:
