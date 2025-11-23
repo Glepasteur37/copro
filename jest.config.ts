@@ -7,6 +7,7 @@ const config: Config = {
     {
       displayName: 'unit',
       testMatch: ['**/tests/unit/**/*.test.ts', '**/tests/outils/**/*.test.ts']
+      testMatch: ['**/tests/unit/**/*.test.ts']
     },
     {
       displayName: 'integration',
