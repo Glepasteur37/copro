@@ -12,6 +12,13 @@ SaaS Next.js complet pour syndics bénévoles : onboarding payant via PayPal, ge
 npm install
 ```
 
+Ou via Docker Compose :
+```bash
+docker compose up -d db
+docker compose build web
+docker compose up web
+```
+
 ## Configuration
 Copiez `.env.example` en `.env` et renseignez vos valeurs :
 - `DATABASE_URL`
@@ -24,12 +31,15 @@ Copiez `.env.example` en `.env` et renseignez vos valeurs :
 npx prisma generate
 npx prisma migrate dev
 ```
+En conteneur : `docker compose run --rm web npx prisma migrate deploy`
 
 ## Lancer le projet
 ```bash
 npm run dev
 ```
 Application disponible sur http://localhost:3000
+
+Avec Docker : `docker compose up web` expose le frontend sur le port 3000 et Postgres sur 5432.
 
 ## Tests
 - Unitaires : `npm run test:unit`
@@ -53,6 +63,7 @@ Application disponible sur http://localhost:3000
 13. Travaux `/app/travaux` : créer un contrat/travaux, vérifier statut.
 14. Rappels `/app/rappels` : créer un rappel, vérifier la liste.
 15. Import bancaire `/app/operations` : charger un CSV `date;libellé;montant`, prévisualiser puis créer les opérations.
+16. Consultation ponctuelle `/app/consultations` : saisir un sujet et un montant, générer l’ordre PayPal puis simuler la capture pour passer le ticket en payé.
 
 ## Arborescence
 - `src/app` : pages (landing, démo, app connectée)

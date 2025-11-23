@@ -1,4 +1,12 @@
-import { appelSchema, coproSchema, invitationSchema, paypalOrderSchema, signupSchema } from '@/lib/validation';
+import {
+  appelSchema,
+  consultationCaptureSchema,
+  consultationRequestSchema,
+  coproSchema,
+  invitationSchema,
+  paypalOrderSchema,
+  signupSchema
+} from '@/lib/validation';
 
 describe('signupSchema', () => {
   it('accepts valid payload', () => {
@@ -65,5 +73,17 @@ describe('paypalOrderSchema', () => {
   it('rejects invalid enum value', () => {
     const result = paypalOrderSchema.safeParse({ plan: 'INVALID', userId: '00000000-0000-0000-0000-000000000000' } as any);
     expect(result.success).toBe(false);
+  });
+});
+
+describe('consultation schemas', () => {
+  it('accepts positive amounts and topic', () => {
+    const parsed = consultationRequestSchema.safeParse({ topic: 'Aide', details: 'Détail', amount: 99 });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects invalid capture payload', () => {
+    const parsed = consultationCaptureSchema.safeParse({ ticketId: 'not-a-uuid', orderId: '' });
+    expect(parsed.success).toBe(false);
   });
 });

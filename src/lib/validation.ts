@@ -56,3 +56,14 @@ export const paypalOrderSchema = z.object({
   plan: z.enum(['SMALL_COPRO', 'MEDIUM_COPRO']),
   userId: z.string().uuid()
 });
+
+export const consultationRequestSchema = z.object({
+  topic: z.string().min(3),
+  details: z.string().optional(),
+  amount: z.number().positive().max(500)
+});
+
+export const consultationCaptureSchema = z.object({
+  ticketId: z.string().uuid(),
+  orderId: z.string().min(3)
+});
