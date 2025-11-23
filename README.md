@@ -48,6 +48,16 @@ Avec Docker : `docker compose up web` expose le frontend sur le port 3000 et Pos
 - E2E (Playwright) : `npm run test:e2e`
 - Tous : `npm test`
 
+### Outils SEO / gratuits
+Tous les calculateurs et générateurs sont accessibles sans compte sous `/outil/*` avec exports PDF/CSV et CTA vers l’app. Les principaux liens :
+- `/outil/calculateur-tantiemes-copro`
+- `/outil/convocation-ag-copro`
+- `/outil/pv-ag-copro`
+- `/outil/budget-previsionnel-copro`
+- `/outil/repartition-flux-sci`
+- `/outil/quittance-colocation`
+- `/outil/quiz-syndic-benevole`
+
 ## Scénario QA manuel
 1. Page d’accueil `/` : vérifier contenu marketing, CTA vers `/demo` et `/app/signup`.
 2. Démo `/demo` : vérifier sections dashboard, AG, lots.
@@ -67,6 +77,7 @@ Avec Docker : `docker compose up web` expose le frontend sur le port 3000 et Pos
 16. Consultation ponctuelle `/app/consultations` : saisir un sujet et un montant, générer l’ordre PayPal puis simuler la capture pour passer le ticket en payé.
 17. Module SCI `/app/sci` : remplir les informations de la SCI, vérifier la création et la répartition des flux.
 18. Module colocation `/app/colocations` : créer la colocation démo, vérifier répartition des charges et quittance affichée.
+19. Outils publics `/outil/*` : ouvrir un calculateur (ex. tantièmes), saisir des données, générer le PDF puis cliquer sur le CTA pour être redirigé vers `/app/signup`.
 
 ## Arborescence
 - `src/app` : pages (landing, démo, app connectée)

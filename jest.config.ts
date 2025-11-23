@@ -6,6 +6,7 @@ const config: Config = {
   projects: [
     {
       displayName: 'unit',
+      testMatch: ['**/tests/unit/**/*.test.ts', '**/tests/outils/**/*.test.ts']
       testMatch: ['**/tests/unit/**/*.test.ts']
     },
     {
