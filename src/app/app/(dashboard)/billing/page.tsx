@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { loadScript } from '@paypal/paypal-js';
 
 const plans = [
   { id: 'SMALL_COPRO', label: 'Small copro', price: '39€' },
@@ -10,27 +9,50 @@ const plans = [
 export default function BillingPage() {
   const [message, setMessage] = useState('');
 
-  const pay = async (plan: string) => {
-    setMessage('Initialisation du paiement...');
-    const paypal = await loadScript({ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '' });
-    if (!paypal) return setMessage('PayPal non chargé');
-    const orderRes = await fetch('/api/payments/paypal/order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan })
+  const loadPaypal = async () => {
+    if (typeof window === 'undefined') return null;
+    const existing = (window as any).paypal;
+    if (existing) return existing;
+    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+    if (!clientId) throw new Error('NEXT_PUBLIC_PAYPAL_CLIENT_ID manquant');
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}`;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Impossible de charger PayPal'));
+      document.body.appendChild(script);
     });
-    const { id } = await orderRes.json();
-    paypal.Buttons({
-      createOrder: () => id,
-      onApprove: async (data) => {
-        await fetch('/api/payments/paypal/capture', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId: data.orderID, plan })
-        });
-        setMessage('Paiement validé, abonnement actif');
-      }
-    }).render('#paypal-buttons');
+    return (window as any).paypal || null;
+  };
+
+  const pay = async (plan: string) => {
+    try {
+      setMessage('Initialisation du paiement...');
+      const paypal = await loadPaypal();
+      if (!paypal) return setMessage('PayPal non chargé');
+      const orderRes = await fetch('/api/payments/paypal/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan })
+      });
+      const { id, error } = await orderRes.json();
+      if (error) throw new Error(error);
+      paypal
+        .Buttons({
+          createOrder: () => id,
+          onApprove: async (data: any) => {
+            await fetch('/api/payments/paypal/capture', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: data.orderID, plan })
+            });
+            setMessage('Paiement validé, abonnement actif');
+          }
+        })
+        .render('#paypal-buttons');
+    } catch (err: any) {
+      setMessage(err?.message || 'Erreur de paiement');
+    }
   };
 
   return (
